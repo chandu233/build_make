@@ -3795,6 +3795,7 @@ ifeq ($(build_otatools_package),true)
 
 INTERNAL_OTATOOLS_MODULES := \
   aapt2 \
+  adb \
   add_img_to_target_files \
   append2simg \
   avbtool \
