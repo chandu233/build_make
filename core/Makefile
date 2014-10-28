@@ -1934,6 +1934,16 @@ RECOVERY_WIPE_DATA_CONFIRMATION_TEXT_FILE :=
 RECOVERY_WIPE_DATA_MENU_HEADER_TEXT_FILE :=
 endif # TARGET_RECOVERY_UI_SCREEN_WIDTH
 
+ifneq ($(TARGET_RECOVERY_DEVICE_DIRS),)
+		recovery_root_private := $(strip \
+				  $(foreach d,$(TARGET_RECOVERY_DEVICE_DIRS), $(wildcard $(d)/recovery/root)))
+		else
+recovery_root_private := $(strip $(wildcard $(TARGET_DEVICE_DIR)/recovery/root))
+endif
+ifneq ($(recovery_root_private),)
+		recovery_root_deps := $(shell find $(recovery_root_private) -type f)
+endif
+
 ifndef TARGET_PRIVATE_RES_DIRS
 TARGET_PRIVATE_RES_DIRS := $(wildcard $(TARGET_DEVICE_DIR)/recovery/res)
 endif
@@ -2085,7 +2095,9 @@ define build-recoveryimage-target
   $(hide) $(foreach recovery_text_file,$(generated_recovery_text_files), \
     cp -rf $(recovery_text_file) $(TARGET_RECOVERY_ROOT_OUT)/res/images/ &&) true
   $(hide) cp -f $(recovery_font) $(TARGET_RECOVERY_ROOT_OUT)/res/images/font.png
-  $(hide) $(foreach item,$(TARGET_PRIVATE_RES_DIRS), \
+ $(hide) $(foreach item,$(recovery_root_private), \
+    cp -rf $(item) $(TARGET_RECOVERY_OUT)/) 
+ $(hide) $(foreach item,$(TARGET_PRIVATE_RES_DIRS), \
     cp -rf $(item) $(TARGET_RECOVERY_ROOT_OUT)/$(newline))
   $(hide) $(foreach item,$(recovery_fstab), \
     cp -f $(item) $(TARGET_RECOVERY_ROOT_OUT)/system/etc/recovery.fstab)
@@ -2146,6 +2158,7 @@ $(INSTALLED_BOOTIMAGE_TARGET): $(MKBOOTFS) $(MKBOOTIMG) $(MINIGZIP) \
 	    $(INSTALLED_2NDBOOTLOADER_TARGET) \
 	    $(INSTALLED_RECOVERY_BUILD_PROP_TARGET) \
 	    $(recovery_resource_deps) \
+	    $(recovery_root_deps) \
 	    $(recovery_fstab)
 	$(call pretty,"Target boot image from recovery: $@")
 	$(call build-recoveryimage-target, $@)
